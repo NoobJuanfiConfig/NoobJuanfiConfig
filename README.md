@@ -1,45 +1,21 @@
 
-# Algorithm (beta)
-# 1. It will get uptime from the IP Hotspot Active
-# 2. Save the value of uptime to temp script named for that user
-#    The purpose of the temp script is to use
-#    its "source" as a temporary field of active uptime value
-# 3. It will deduct the value from the script source to the limit-uptime
-
-# hsactiveuptime is uptime in IP/Hotspot/Active
 :local hsactiveuptime; 
-# hslimit is limit-uptime in IP/Hotspot/User
 :local hslimit;
-# hsuser is the hotspot user
 :local hsuser;
-# hsusedtime is used to keep track of used time
-# this is the value inside the script source
 :local hsusedtime;
-# hsuseduptime is the value in IP Hotspot User uptime
 :local hsuseduptime;
 :do {
     
-    # Clean-up
-    # When the user is not in IP Hotspot active
-    # Remove the temp script for that user
     :foreach i in=[/system script find where comment="temp"] do={
         :set hsuser [/system script get $i name];
         :set hsusedtime [/system script get $i source]
         :set hsuseduptime [/ip hotspot user get $hsuser uptime];
         :set hslimit [/ip hotspot user get $hsuser limit-uptime];
-        # When the user is not in IP Hotspot active
-        :if ( [/ip hotspot active find where user=$hsuser] = "") do={
-            # Reset Counters
-            # As part of the uptime was already stored in the temp script
-            # and deducted to the limit-uptime
-            # will deduct any remaining uptime
-            # Then reset the counters for that user
-            # Reset only when uptime is not 00:00:00
+        :if ( [/ip hotspot active find where user=$hsuser] = "") do
             :if ( $hsuseduptime > 0) do={
                 /ip hotspot user set $hsuser limit-uptime=($hslimit - ($hsuseduptime - $hsusedtime));
                 /ip hotspot user reset-counters $hsuser;
             }
-            # Then finally remove the temp script
             /system script remove $i;
         }
     }
